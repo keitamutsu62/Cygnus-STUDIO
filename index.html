@@ -312,7 +312,10 @@ html, body {
     <div class="section" style="padding-top:0;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div class="section-title" style="margin-bottom:0;">今日の予約</div>
-        <div class="loop-badge" style="border-color:rgba(200,168,130,0.2);color:rgba(200,168,130,0.7);background:rgba(200,168,130,0.06);">RESERVE 連携予定</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span id="apptRefreshBadge" style="font-size:9px;font-family:'Josefin Sans',sans-serif;letter-spacing:0.1em;color:var(--green);opacity:0;transition:opacity 0.3s;"></span>
+          <div class="loop-badge" style="border-color:rgba(200,168,130,0.2);color:rgba(200,168,130,0.7);background:rgba(200,168,130,0.06);">RESERVE 連携予定</div>
+        </div>
       </div>
       <div id="apptList"></div>
     </div>
@@ -771,6 +774,45 @@ function renderRecentTreatments(treatments) {
     return '<div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;"><div><div style="font-size:13px;margin-bottom:2px;">' + t.menu + '</div><div style="font-size:10px;color:var(--muted);">' + t.label + ' ' + t.time + ' · ' + t.clientName + '</div></div><div style="font-family:\'Josefin Sans\',sans-serif;font-weight:100;font-size:14px;color:var(--gold);">¥' + t.price.toLocaleString() + '</div></div>';
   }).join('');
 }
+
+/* ─── 予約リフレッシュ ────────────────────────────────────────
+   「通知で気づく → 開いたら最新」パターン
+   ① アプリ/タブが前面に戻った瞬間に再取得
+   ② バックグラウンドポーリング（60秒）で念のため補完        */
+
+function refreshAppointments() {
+  var badge = document.getElementById('apptRefreshBadge');
+  if (badge) badge.style.opacity = '1';
+  fetchTodayAppointments().then(function(appts) {
+    renderAppointments(appts);
+    if (badge) { badge.textContent = '更新済'; setTimeout(function(){ badge.style.opacity = '0'; }, 1500); }
+  });
+}
+
+// ① 復帰検知（タブ切り替え・スリープ解除・アプリ再開）
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') refreshAppointments();
+});
+window.addEventListener('focus', refreshAppointments);
+
+// ② バックグラウンドポーリング（60秒）
+setInterval(refreshAppointments, 60000);
+
+/* [PUSH NOTIFICATION HOOK]
+   本番: RESERVE がキャンセル/変更をプッシュ通知送信
+   → Service Worker で受信して refreshAppointments() を呼ぶ
+
+   navigator.serviceWorker.addEventListener('message', function(e) {
+     if (e.data.type === 'APPOINTMENT_CHANGED') refreshAppointments();
+   });
+
+   通知ペイロード例:
+   { type: 'APPOINTMENT_CHANGED',
+     appointmentId: 'xxx',
+     change: 'cancelled',
+     clientName: '田中様',
+     time: '13:30' }
+*/
 
 /* ─── Init ───────────────────────────────────────────────────── */
 (function() {
