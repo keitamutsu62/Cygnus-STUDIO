@@ -360,7 +360,12 @@ html, body {
     <!-- 一言メモ -->
     <div class="section">
       <div class="section-title">今日のメモ</div>
-      <div class="memo-box" onclick="openMemo()">今日感じたこと、気づいたことを残しておく...</div>
+      <div class="memo-box" id="todayMemoBox" onclick="openMemo()">今日感じたこと、気づいたことを残しておく...</div>
+      <div onclick="openMemoLog()" style="display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-top:10px;cursor:pointer;padding:4px 0;">
+        <span style="font-size:10px;color:var(--muted);font-family:'Josefin Sans',sans-serif;letter-spacing:0.1em;" id="memoLogCount"></span>
+        <span style="font-size:10px;color:var(--muted);font-family:'Josefin Sans',sans-serif;letter-spacing:0.12em;">過去の記録を見る</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><polyline points="4,2 8,6 4,10" stroke="rgba(232,228,220,0.4)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
     </div>
   </div>
 </div>
@@ -657,6 +662,16 @@ html, body {
   </div>
 </div>
 
+<!-- MEMO LOG MODAL -->
+<div class="modal" id="memoLogModal">
+  <div class="modal-inner" style="max-height:80vh;">
+    <div class="modal-handle"></div>
+    <div class="modal-title">過去のメモ</div>
+    <div id="memoLogList" style="display:flex;flex-direction:column;gap:12px;"></div>
+    <button class="btn-cancel" style="margin-top:16px;" onclick="closeModal('memoLogModal')">閉じる</button>
+  </div>
+</div>
+
 <!-- MEMO MODAL -->
 <div class="modal" id="memoModal">
   <div class="modal-inner">
@@ -741,6 +756,32 @@ function fetchRecentTreatments() {
     { label:'今日', time:'11:00', clientName:'佐藤様', menu:'カット + オーガニック縮毛矯正', price:15950 },
     { label:'昨日', time:'16:00', clientName:'山田様', menu:'リタッチカラー',               price:8250  },
   ]);
+}
+
+/* [STUDIO DATA]  GET /api/studio/memos?stylist_id={CYGNUS_ID}
+   res: Array<{ date: string, text: string }>
+   スタイリスト自身のメモログ。STUDIOが保持するデータ。          */
+var memoLog = [
+  { date: '2026年5月26日', text: '田中様のバレイヤージュ、今日は光の当たり方がすごく綺麗に出せた。ブリーチの塗布量を少し変えたのが良かったかも。次回も試してみる。' },
+  { date: '2026年5月23日', text: '縮毛矯正の薬剤、夏に向けて見直しが必要かもしれない。湿気の影響が出始めてる気がする。' },
+  { date: '2026年5月20日', text: '新規の方が「インスタで見た」と来てくれた。作品をもっとこまめに上げたほうがいいかな。' },
+  { date: '2026年5月15日', text: 'リピート率が少し落ちた月だった。連絡のタイミングを見直してみる。' },
+];
+
+function updateMemoLogCount() {
+  var el = document.getElementById('memoLogCount');
+  if (el) el.textContent = memoLog.length + '件 · ';
+}
+
+function openMemoLog() {
+  var list = document.getElementById('memoLogList');
+  list.innerHTML = memoLog.map(function(m) {
+    return '<div style="border-bottom:1px solid var(--border);padding-bottom:12px;">'
+      + '<div style="font-size:9px;color:var(--gold);font-family:\'Josefin Sans\',sans-serif;letter-spacing:0.12em;margin-bottom:6px;">' + m.date + '</div>'
+      + '<div style="font-size:13px;color:var(--text);line-height:1.7;">' + m.text + '</div>'
+      + '</div>';
+  }).join('');
+  openModal('memoLogModal');
 }
 
 /* [LOOP AI API]  POST /api/loop/ai/bio-suggestion
@@ -850,6 +891,7 @@ setInterval(refreshAppointments, 60000);
   fetchTodayAppointments().then(renderAppointments);
   fetchMonthlyStats().then(renderMonthlyStats);
   fetchRecentTreatments().then(renderRecentTreatments);
+  updateMemoLogCount();
 })();
 
 /* ── Career ── */
@@ -1149,8 +1191,19 @@ function openAddWork() { openModal('addWorkModal'); }
 
 function saveMemo() {
   var text = document.getElementById('memoText').value.trim();
-  var box = document.querySelector('.memo-box');
-  if (text) { box.textContent = text; box.classList.add('has-content'); }
+  if (!text) { closeModal('memoModal'); return; }
+  var box = document.getElementById('todayMemoBox');
+  box.textContent = text;
+  box.classList.add('has-content');
+  var days = ['日','月','火','水','木','金','土'];
+  var now = new Date();
+  var dateStr = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日';
+  if (!memoLog.length || memoLog[0].date !== dateStr) {
+    memoLog.unshift({ date: dateStr, text: text });
+  } else {
+    memoLog[0].text = text;
+  }
+  updateMemoLogCount();
   closeModal('memoModal');
 }
 
