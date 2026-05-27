@@ -223,6 +223,19 @@ html, body {
 .toggle-knob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: var(--muted); border-radius: 50%; transition: all 0.2s; }
 .toggle-switch.on .toggle-knob { left: 18px; background: #1a1816; }
 
+/* APPOINTMENT */
+.appt-item { display:flex; align-items:center; gap:14px; padding:13px 16px; background:var(--bg2); border:1px solid var(--border); border-radius:2px; margin-bottom:8px; }
+.appt-time { font-family:'Josefin Sans',sans-serif; font-weight:100; font-size:15px; color:var(--text); min-width:44px; }
+.appt-info { flex:1; }
+.appt-menu { font-size:13px; color:var(--text); margin-bottom:2px; }
+.appt-client { font-size:10px; color:var(--muted); }
+.appt-price { font-family:'Josefin Sans',sans-serif; font-weight:100; font-size:13px; color:var(--gold); flex-shrink:0; }
+.loop-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; background:rgba(109,186,142,0.08); border:1px solid rgba(109,186,142,0.2); border-radius:2px; font-size:9px; color:rgba(109,186,142,0.7); font-family:'Josefin Sans',sans-serif; letter-spacing:0.1em; margin-left:4px; }
+
+/* AVATAR UPLOAD */
+.profile-avatar { position:relative; }
+.avatar-edit-hint { position:absolute; bottom:0; right:0; width:22px; height:22px; background:var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; }
+
 @keyframes oA { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes oB { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
 .oa { transform-origin: 40px 40px; animation: oA 26s linear infinite; }
@@ -290,9 +303,18 @@ html, body {
 
   <div class="scroll">
     <!-- あいさつ -->
-    <div style="padding:24px 20px 0;">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">2026年5月27日 · 火曜日</div>
+    <div style="padding:24px 20px 16px;">
+      <div id="homeDate" style="font-size:11px;color:var(--muted);margin-bottom:4px;"></div>
       <div style="font-size:20px;font-weight:400;">おつかれさまです。</div>
+    </div>
+
+    <!-- 今日の予約 -->
+    <div class="section" style="padding-top:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="section-title" style="margin-bottom:0;">今日の予約</div>
+        <div class="loop-badge">LOOP 連携予定</div>
+      </div>
+      <div id="apptList"></div>
     </div>
 
     <!-- 今月のサマリ -->
@@ -403,12 +425,15 @@ html, body {
         <span class="logo-s">STUDIO</span>
       </div>
     </div>
+    <div onclick="openAddCareer()" style="width:32px;height:32px;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.7;">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="#c8a882" stroke-width="1.4" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="#c8a882" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </div>
   </div>
 
   <div class="scroll">
     <div style="padding:24px 20px 8px;">
       <div style="font-size:18px;font-weight:400;margin-bottom:4px;">高橋 美咲</div>
-      <div style="font-size:11px;color:var(--muted);">美容師歴 11年</div>
+      <div id="tlYearsLabel" style="font-size:11px;color:var(--muted);"></div>
     </div>
 
     <!-- 累計サマリ -->
@@ -416,11 +441,11 @@ html, body {
       <div class="stat-grid">
         <div class="card">
           <div class="card-label">累計施術</div>
-          <div class="card-value">2,847<span style="font-size:13px;color:var(--muted);margin-left:2px;">件</span></div>
+          <div class="card-value"><span id="tlTotal">—</span><span style="font-size:13px;color:var(--muted);margin-left:2px;">件</span></div>
         </div>
         <div class="card">
           <div class="card-label">在籍店舗</div>
-          <div class="card-value">3<span style="font-size:13px;color:var(--muted);margin-left:2px;">店</span></div>
+          <div class="card-value"><span id="tlStores">—</span><span style="font-size:13px;color:var(--muted);margin-left:2px;">店</span></div>
         </div>
       </div>
     </div>
@@ -428,43 +453,7 @@ html, body {
     <!-- タイムライン -->
     <div style="padding:8px 0 0;">
       <div style="padding:0 20px 16px;font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);font-family:'Josefin Sans',sans-serif;">Career</div>
-
-      <div class="timeline-item">
-        <div class="timeline-dot current"></div>
-        <div class="timeline-body">
-          <div class="timeline-period">2021年4月 — 現在</div>
-          <div class="timeline-salon">hair Lanish 東松戸店</div>
-          <div class="timeline-role">スタイリスト / オーナー</div>
-          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-            <div style="font-size:10px;color:var(--muted);background:var(--bg3);padding:4px 10px;border-radius:2px;">施術 1,204件</div>
-            <div style="font-size:10px;color:var(--muted);background:var(--bg3);padding:4px 10px;border-radius:2px;">指名率 74%</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="timeline-item">
-        <div class="timeline-dot"></div>
-        <div class="timeline-body">
-          <div class="timeline-period">2017年3月 — 2021年3月</div>
-          <div class="timeline-salon">SALON DE BEAUTE 銀座店</div>
-          <div class="timeline-role">スタイリスト</div>
-          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-            <div style="font-size:10px;color:var(--muted);background:var(--bg3);padding:4px 10px;border-radius:2px;">施術 1,089件</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="timeline-item">
-        <div class="timeline-dot"></div>
-        <div class="timeline-body">
-          <div class="timeline-period">2015年4月 — 2017年2月</div>
-          <div class="timeline-salon">HAIR ATELIER NORD</div>
-          <div class="timeline-role">アシスタント → スタイリスト</div>
-          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-            <div style="font-size:10px;color:var(--muted);background:var(--bg3);padding:4px 10px;border-radius:2px;">施術 554件</div>
-          </div>
-        </div>
-      </div>
+      <div id="careerList"></div>
     </div>
   </div>
 </div>
@@ -486,8 +475,14 @@ html, body {
 
   <div class="scroll">
     <div style="padding:24px 20px 0;">
-      <div class="profile-avatar">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="5" stroke="#c8a882" stroke-width="1.2" opacity="0.5"/><path d="M4 24C4 19.6 8.5 16 14 16C19.5 16 24 19.6 24 24" stroke="#c8a882" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/></svg>
+      <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="handleAvatarSelect()">
+      <div class="profile-avatar" onclick="document.getElementById('avatarInput').click()" style="cursor:pointer;">
+        <div id="profileAvatarImg" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="5" stroke="#c8a882" stroke-width="1.2" opacity="0.5"/><path d="M4 24C4 19.6 8.5 16 14 16C19.5 16 24 19.6 24 24" stroke="#c8a882" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/></svg>
+        </div>
+        <div class="avatar-edit-hint">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 7.5L3 9.5L9 1.5" stroke="#1a1816" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
       </div>
       <div class="profile-name-block">
         <div class="profile-name">高橋 美咲</div>
@@ -618,6 +613,42 @@ html, body {
   </div>
 </div>
 
+<!-- ADD CAREER MODAL -->
+<div class="modal" id="addCareerModal">
+  <div class="modal-inner">
+    <div class="modal-handle"></div>
+    <div class="modal-title">キャリアを追加</div>
+    <div class="field">
+      <div class="field-label">店舗名</div>
+      <input class="field-input" id="careerSalon" type="text" placeholder="サロン名を入力"/>
+    </div>
+    <div class="field">
+      <div class="field-label">役職</div>
+      <input class="field-input" id="careerRole" type="text" placeholder="スタイリスト、アシスタント など"/>
+    </div>
+    <div class="field">
+      <div class="field-label">在籍開始</div>
+      <div style="display:flex;gap:8px;">
+        <select class="field-input" id="careerStartYear" style="flex:1;"></select>
+        <select class="field-input" id="careerStartMonth" style="width:80px;"></select>
+      </div>
+    </div>
+    <div class="field" id="careerEndField">
+      <div class="field-label">在籍終了</div>
+      <div style="display:flex;gap:8px;">
+        <select class="field-input" id="careerEndYear" style="flex:1;"></select>
+        <select class="field-input" id="careerEndMonth" style="width:80px;"></select>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+      <input type="checkbox" id="careerCurrent" onchange="toggleCareerCurrent()" style="width:16px;height:16px;accent-color:var(--gold);">
+      <label for="careerCurrent" style="font-size:12px;color:var(--muted);">現在在籍中</label>
+    </div>
+    <button class="btn-save" onclick="saveCareer()">追加する</button>
+    <button class="btn-cancel" onclick="closeModal('addCareerModal')">キャンセル</button>
+  </div>
+</div>
+
 <!-- MEMO MODAL -->
 <div class="modal" id="memoModal">
   <div class="modal-inner">
@@ -660,6 +691,125 @@ html, body {
 var current = 's-home';
 var currentWorkId = null;
 var activeFilter = 'すべて';
+var profileAvatarUrl = null;
+
+/* ── Today's date ── */
+(function() {
+  var days = ['日','月','火','水','木','金','土'];
+  var now = new Date();
+  var el = document.getElementById('homeDate');
+  if (el) el.textContent = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 · ' + days[now.getDay()] + '曜日';
+})();
+
+/* ── Appointments ── */
+var todayAppts = [
+  { time: '10:00', client: '鈴木様', menu: 'カット + デジタルパーマ',             price: 15400 },
+  { time: '13:30', client: '田中様', menu: 'カット + バレイヤージュカラー',       price: 14300 },
+  { time: '16:00', client: '山本様', menu: 'リタッチカラー + トリートメント',     price: 10450 },
+];
+(function() {
+  var el = document.getElementById('apptList');
+  if (!el) return;
+  el.innerHTML = todayAppts.map(function(a) {
+    return '<div class="appt-item"><div class="appt-time">' + a.time + '</div><div class="appt-info"><div class="appt-menu">' + a.menu + '</div><div class="appt-client">' + a.client + '</div></div><div class="appt-price">¥' + a.price.toLocaleString() + '</div></div>';
+  }).join('');
+})();
+
+/* ── Career ── */
+var careerData = [
+  { id:1, salon:'hair Lanish 東松戸店',    role:'スタイリスト / オーナー',      startYear:2021, startMonth:4,  endYear:null, endMonth:null, current:true,  count:1204, note:'指名率 74%' },
+  { id:2, salon:'SALON DE BEAUTE 銀座店', role:'スタイリスト',                 startYear:2017, startMonth:3,  endYear:2021, endMonth:3,    current:false, count:1089, note:'' },
+  { id:3, salon:'HAIR ATELIER NORD',      role:'アシスタント → スタイリスト', startYear:2015, startMonth:4,  endYear:2017, endMonth:2,    current:false, count:554,  note:'' },
+];
+var nextCareerId = 4;
+
+function renderTimeline() {
+  var list = document.getElementById('careerList');
+  var total = careerData.reduce(function(s,c){ return s + (c.count||0); }, 0);
+  var minYear = Math.min.apply(null, careerData.map(function(c){ return c.startYear; }));
+  var years = new Date().getFullYear() - minYear + 1;
+  document.getElementById('tlYearsLabel').textContent = '美容師歴 ' + years + '年';
+  document.getElementById('tlTotal').textContent = total.toLocaleString();
+  document.getElementById('tlStores').textContent = careerData.length;
+  list.innerHTML = careerData.map(function(c) {
+    var period = c.startYear + '年' + c.startMonth + '月 — ' + (c.current ? '現在' : c.endYear + '年' + c.endMonth + '月');
+    var chips = '';
+    if (c.count) chips += '<div style="font-size:10px;color:var(--muted);background:var(--bg3);padding:4px 10px;border-radius:2px;">施術 ' + c.count.toLocaleString() + '件</div>';
+    if (c.note) chips += '<div style="font-size:10px;color:var(--muted);background:var(--bg3);padding:4px 10px;border-radius:2px;">' + c.note + '</div>';
+    return '<div class="timeline-item"><div class="timeline-dot' + (c.current ? ' current' : '') + '"></div><div class="timeline-body"><div class="timeline-period">' + period + '</div><div class="timeline-salon">' + c.salon + '</div><div class="timeline-role">' + c.role + '</div>' + (chips ? '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">' + chips + '</div>' : '') + '</div></div>';
+  }).join('');
+}
+
+function buildYearOptions(selId, selected) {
+  var sel = document.getElementById(selId);
+  sel.innerHTML = '';
+  for (var y = new Date().getFullYear(); y >= 1990; y--) {
+    var opt = document.createElement('option');
+    opt.value = y; opt.textContent = y + '年';
+    if (y === selected) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+function buildMonthOptions(selId, selected) {
+  var sel = document.getElementById(selId);
+  sel.innerHTML = '';
+  for (var m = 1; m <= 12; m++) {
+    var opt = document.createElement('option');
+    opt.value = m; opt.textContent = m + '月';
+    if (m === selected) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+function openAddCareer() {
+  buildYearOptions('careerStartYear', new Date().getFullYear());
+  buildMonthOptions('careerStartMonth', 1);
+  buildYearOptions('careerEndYear', new Date().getFullYear());
+  buildMonthOptions('careerEndMonth', 1);
+  document.getElementById('careerCurrent').checked = false;
+  document.getElementById('careerEndField').style.display = 'block';
+  openModal('addCareerModal');
+}
+
+function toggleCareerCurrent() {
+  document.getElementById('careerEndField').style.display = document.getElementById('careerCurrent').checked ? 'none' : 'block';
+}
+
+function saveCareer() {
+  var salon = document.getElementById('careerSalon').value.trim();
+  var role  = document.getElementById('careerRole').value.trim();
+  if (!salon || !role) return;
+  var startYear  = parseInt(document.getElementById('careerStartYear').value);
+  var startMonth = parseInt(document.getElementById('careerStartMonth').value);
+  var isCurrent  = document.getElementById('careerCurrent').checked;
+  var endYear    = isCurrent ? null : parseInt(document.getElementById('careerEndYear').value);
+  var endMonth   = isCurrent ? null : parseInt(document.getElementById('careerEndMonth').value);
+  if (isCurrent) careerData.forEach(function(c){ c.current = false; });
+  var entry = { id:nextCareerId++, salon:salon, role:role, startYear:startYear, startMonth:startMonth, endYear:endYear, endMonth:endMonth, current:isCurrent, count:0, note:'' };
+  careerData.push(entry);
+  careerData.sort(function(a,b){ return b.startYear - a.startYear || b.startMonth - a.startMonth; });
+  if (isCurrent) { var idx = careerData.indexOf(entry); careerData.splice(idx,1); careerData.unshift(entry); }
+  closeModal('addCareerModal');
+  document.getElementById('careerSalon').value = '';
+  document.getElementById('careerRole').value  = '';
+  renderTimeline();
+}
+
+renderTimeline();
+
+/* ── Avatar ── */
+function handleAvatarSelect() {
+  var input = document.getElementById('avatarInput');
+  if (!input.files || !input.files[0]) return;
+  profileAvatarUrl = URL.createObjectURL(input.files[0]);
+  var el = document.getElementById('profileAvatarImg');
+  el.innerHTML = '';
+  el.style.backgroundImage  = 'url(' + profileAvatarUrl + ')';
+  el.style.backgroundSize   = 'cover';
+  el.style.backgroundPosition = 'center';
+  el.style.borderRadius     = '50%';
+  input.value = '';
+}
 
 var workData = [
   { id: 1, genre: 'カラー',   comment: 'バレイヤージュで透明感を。骨格に合わせてハイライトの入れ方を工夫しました。',     date: '2026.05.26', published: true,  bg: 'linear-gradient(145deg,#3a2e28,#1e1c1a)' },
@@ -820,11 +970,21 @@ function saveProfile() {
 }
 
 function openReservePreview() {
-  var bio = document.getElementById('profileBio').value;
+  var bio    = document.getElementById('profileBio').value;
   var shimei = document.getElementById('profileShimei').value;
   var genres = Array.from(document.querySelectorAll('#s-profile .genre-tag.active')).map(function(el){ return el.textContent; });
   var published = workData.filter(function(w){ return w.published; });
 
+  var rpAv = document.getElementById('rpAvatar');
+  if (profileAvatarUrl) {
+    rpAv.innerHTML = '';
+    rpAv.style.backgroundImage = 'url(' + profileAvatarUrl + ')';
+    rpAv.style.backgroundSize = 'cover';
+    rpAv.style.backgroundPosition = 'center';
+  } else {
+    rpAv.style.backgroundImage = '';
+    rpAv.innerHTML = '<svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="5" stroke="#c8a882" stroke-width="1.2" opacity="0.6"/><path d="M4 24C4 19.6 8.5 16 14 16C19.5 16 24 19.6 24 24" stroke="#c8a882" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/></svg>';
+  }
   document.getElementById('rpBio').textContent = bio;
   document.getElementById('rpShimei').textContent = shimei;
 
