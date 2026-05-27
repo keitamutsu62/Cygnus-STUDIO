@@ -489,8 +489,22 @@ html, body {
       </div>
 
       <div class="field">
-        <div class="field-label">自己紹介</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div class="field-label" style="margin-bottom:0;">自己紹介</div>
+          <button onclick="requestAIBio()" id="aiBioBtn" style="display:flex;align-items:center;gap:4px;padding:4px 10px;background:transparent;border:1px solid var(--gold-border);border-radius:2px;color:var(--gold);font-size:9px;letter-spacing:0.14em;cursor:pointer;font-family:'Josefin Sans',sans-serif;">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="#c8a882" stroke-width="0.9" opacity="0.7"/><path d="M3.5 5C3.5 4.17 4.17 3.5 5 3.5" stroke="#c8a882" stroke-width="0.9" stroke-linecap="round"/><circle cx="5" cy="7" r="0.5" fill="#c8a882"/></svg>
+            AI に提案してもらう
+          </button>
+        </div>
         <textarea class="field-textarea" id="profileBio" placeholder="あなたのスタイルや得意なことを伝えてください">カラーとデジタルパーマが得意です。お客様一人ひとりの骨格や髪質に合わせた提案を大切にしています。</textarea>
+        <div id="aiSuggestionBox" style="display:none;margin-top:8px;background:var(--bg3);border:1px solid var(--gold-border);border-radius:2px;padding:14px 14px 10px;">
+          <div style="font-size:9px;letter-spacing:0.18em;color:var(--gold);font-family:'Josefin Sans',sans-serif;margin-bottom:8px;opacity:0.8;">AI SUGGESTION · LOOP データ分析より</div>
+          <div id="aiSuggestionText" style="font-size:13px;color:var(--text);line-height:1.75;margin-bottom:12px;"></div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="applyAISuggestion()" style="flex:1;padding:9px;background:var(--gold);color:#1a1816;border:none;border-radius:2px;font-size:11px;letter-spacing:0.1em;cursor:pointer;font-family:'Josefin Sans',sans-serif;">この文章を使う</button>
+            <button onclick="closeAISuggestion()" style="padding:9px 14px;background:transparent;border:1px solid var(--border);border-radius:2px;font-size:11px;color:var(--muted);cursor:pointer;font-family:'Josefin Sans',sans-serif;">閉じる</button>
+          </div>
+        </div>
       </div>
 
       <div class="field">
@@ -729,6 +743,19 @@ function fetchRecentTreatments() {
   ]);
 }
 
+/* [LOOP AI API]  POST /api/loop/ai/bio-suggestion
+   body: { stylist_id: CYGNUS_ID }
+   res:  { suggestion: string }
+   LOOPの施術履歴・得意ジャンル・指名率・リピート率を分析して
+   スタイリストの強みを文章化して返す                              */
+function fetchAIBioSuggestion() {
+  return new Promise(function(resolve) {
+    setTimeout(function() {  // ダミー: 本番はLOOP AIのAPIを呼ぶ
+      resolve({ suggestion: 'カラーとデジタルパーマを中心に、年間約450件の施術経験があります。リピート率68%・指名率74%という数字が示す通り、一人ひとりの骨格・髪質・ライフスタイルに合わせたオーダーメイドのスタイル提案が得意です。「また来たい」と思っていただける時間をつくることを大切にしています。' });
+    }, 900);  // AIらしい少し待つ演出
+  });
+}
+
 /* [LOOP API]  GET /api/loop/treatments/count
                    ?stylist_id={CYGNUS_ID}&from={ISO8601}&to={ISO8601}
    res: { count: number }
@@ -847,7 +874,7 @@ function renderTimeline() {
     var chips = '';
     if (c.count) chips += '<div style="font-size:10px;color:var(--muted);background:var(--bg3);padding:4px 10px;border-radius:2px;">施術 ' + c.count.toLocaleString() + '件</div>';
     if (c.note)  chips += '<div style="font-size:10px;color:var(--muted);background:var(--bg3);padding:4px 10px;border-radius:2px;">' + c.note + '</div>';
-    return '<div class="timeline-item" onclick="editCareer(' + c.id + ')" style="cursor:pointer;"><div class="timeline-dot' + (c.current ? ' current' : '') + '"></div><div class="timeline-body"><div class="timeline-period">' + period + '</div><div class="timeline-salon">' + c.salon + '</div><div class="timeline-role">' + c.role + '</div>' + (chips ? '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">' + chips + '</div>' : '') + '</div></div>';
+    return '<div class="timeline-item" onclick="editCareer(' + c.id + ')" style="cursor:pointer;"><div class="timeline-dot' + (c.current ? ' current' : '') + '"></div><div class="timeline-body"><div class="timeline-period">' + period + '</div><div class="timeline-salon">' + c.salon + '</div><div class="timeline-role">' + c.role + '</div>' + (chips ? '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">' + chips + '</div>' : '') + '</div><div style="flex-shrink:0;padding-left:8px;display:flex;align-items:center;opacity:0.35;"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 2L12 4.5L5 11.5L2 12L2.5 9L9.5 2Z" stroke="#c8a882" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>';
   }).join('');
 }
 
@@ -1155,6 +1182,29 @@ function handlePhotoSelect() {
   document.querySelectorAll('#addWorkModal .genre-tag').forEach(function(t){ t.classList.remove('active'); });
   input.value = '';
   renderArchive(activeFilter);
+}
+
+function requestAIBio() {
+  var btn = document.getElementById('aiBioBtn');
+  btn.textContent = '分析中...';
+  btn.disabled = true;
+  document.getElementById('aiSuggestionBox').style.display = 'none';
+  fetchAIBioSuggestion().then(function(res) {
+    document.getElementById('aiSuggestionText').textContent = res.suggestion;
+    document.getElementById('aiSuggestionBox').style.display = 'block';
+    btn.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="#c8a882" stroke-width="0.9" opacity="0.7"/><path d="M3.5 5C3.5 4.17 4.17 3.5 5 3.5" stroke="#c8a882" stroke-width="0.9" stroke-linecap="round"/><circle cx="5" cy="7" r="0.5" fill="#c8a882"/></svg> AI に提案してもらう';
+    btn.disabled = false;
+  });
+}
+
+function applyAISuggestion() {
+  var text = document.getElementById('aiSuggestionText').textContent;
+  document.getElementById('profileBio').value = text;
+  closeAISuggestion();
+}
+
+function closeAISuggestion() {
+  document.getElementById('aiSuggestionBox').style.display = 'none';
 }
 
 function saveProfile() {
