@@ -202,10 +202,25 @@ html, body {
 /* MODAL */
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
 .modal.open { opacity: 1; pointer-events: all; }
-.modal-inner { width: 100%; background: var(--bg2); border-radius: 4px 4px 0 0; padding: 24px 20px 40px; }
+.modal-inner { width: 100%; background: var(--bg2); border-radius: 4px 4px 0 0; padding: 24px 20px 40px; max-height: 85vh; overflow-y: auto; }
 .modal-handle { width: 36px; height: 3px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
 .modal-title { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; font-family: 'Josefin Sans',sans-serif; }
 .btn-cancel { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border); border-radius: 2px; color: var(--muted); font-size: 12px; letter-spacing: 0.12em; cursor: pointer; font-family: 'Josefin Sans',sans-serif; margin-top: 8px; }
+
+/* WORK DETAIL */
+.work-detail-photo { width: 100%; aspect-ratio: 4/3; border-radius: 2px; margin-bottom: 16px; }
+.work-detail-genre { display: inline-block; font-size: 10px; font-family: 'Josefin Sans',sans-serif; letter-spacing: 0.12em; color: var(--gold); background: var(--gold-dim); border: 1px solid var(--gold-border); padding: 4px 10px; border-radius: 2px; margin-bottom: 14px; }
+.work-detail-comment { font-size: 13px; color: var(--text); line-height: 1.7; margin-bottom: 14px; }
+.work-detail-date { font-size: 10px; color: var(--muted); font-family: 'Josefin Sans',sans-serif; letter-spacing: 0.1em; margin-bottom: 20px; }
+.work-detail-actions { display: flex; gap: 8px; }
+.btn-outline { flex: 1; padding: 12px; background: transparent; border: 1px solid var(--border); border-radius: 2px; color: var(--muted); font-size: 11px; letter-spacing: 0.12em; cursor: pointer; font-family: 'Josefin Sans',sans-serif; }
+.btn-danger { flex: 1; padding: 12px; background: transparent; border: 1px solid rgba(220,80,80,0.3); border-radius: 2px; color: rgba(220,80,80,0.7); font-size: 11px; letter-spacing: 0.12em; cursor: pointer; font-family: 'Josefin Sans',sans-serif; }
+.reserve-toggle { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 2px; margin-bottom: 16px; }
+.toggle-label { font-size: 11px; color: var(--muted); }
+.toggle-switch { width: 36px; height: 20px; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; position: relative; cursor: pointer; transition: background 0.2s; }
+.toggle-switch.on { background: var(--gold); border-color: var(--gold); }
+.toggle-knob { position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: var(--muted); border-radius: 50%; transition: all 0.2s; }
+.toggle-switch.on .toggle-knob { left: 18px; background: #1a1816; }
 
 @keyframes oA { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes oB { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
@@ -313,7 +328,7 @@ html, body {
         <span class="logo-s">STUDIO</span>
       </div>
     </div>
-    <div style="font-size:10px;color:var(--muted);font-family:'Josefin Sans',sans-serif;letter-spacing:0.1em;">24 works</div>
+    <div id="archiveCount" style="font-size:10px;color:var(--muted);font-family:'Josefin Sans',sans-serif;letter-spacing:0.1em;">8 works</div>
   </div>
 
   <div class="scroll" style="padding-bottom:80px;">
@@ -330,46 +345,7 @@ html, body {
       <div class="genre-tag" onclick="filterArchive(this)">縮毛矯正</div>
     </div>
 
-    <div class="archive-grid" style="padding:0 2px;">
-      <!-- 追加ボタン -->
-      <div class="archive-add" onclick="openAddWork()">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><line x1="10" y1="3" x2="10" y2="17" stroke="#c8a882" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/><line x1="3" y1="10" x2="17" y2="10" stroke="#c8a882" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/></svg>
-        <span>追加</span>
-      </div>
-      <!-- ダミー作品 -->
-      <div class="archive-item">
-        <div style="width:100%;height:100%;background:linear-gradient(135deg,#2a2420,#1e1c1a);"></div>
-        <div class="archive-tag">カラー</div>
-      </div>
-      <div class="archive-item">
-        <div style="width:100%;height:100%;background:linear-gradient(135deg,#221e1c,#2e2a26);"></div>
-        <div class="archive-tag">カット</div>
-      </div>
-      <div class="archive-item">
-        <div style="width:100%;height:100%;background:linear-gradient(135deg,#28221e,#1c1a18);"></div>
-        <div class="archive-tag">パーマ</div>
-      </div>
-      <div class="archive-item">
-        <div style="width:100%;height:100%;background:linear-gradient(135deg,#1e1c1a,#2a2420);"></div>
-        <div class="archive-tag">カラー</div>
-      </div>
-      <div class="archive-item">
-        <div style="width:100%;height:100%;background:linear-gradient(135deg,#2e2a26,#221e1c);"></div>
-        <div class="archive-tag">縮毛矯正</div>
-      </div>
-      <div class="archive-item">
-        <div style="width:100%;height:100%;background:linear-gradient(135deg,#1c1a18,#28221e);"></div>
-        <div class="archive-tag">カット</div>
-      </div>
-      <div class="archive-item">
-        <div style="width:100%;height:100%;background:linear-gradient(135deg,#2a2420,#1e1c1a);"></div>
-        <div class="archive-tag">カラー</div>
-      </div>
-      <div class="archive-item">
-        <div style="width:100%;height:100%;background:linear-gradient(135deg,#221e1c,#2e2a26);"></div>
-        <div class="archive-tag">パーマ</div>
-      </div>
-    </div>
+    <div class="archive-grid" id="archiveGrid" style="padding:0 2px;"></div>
   </div>
 </div>
 
@@ -505,7 +481,7 @@ html, body {
         <input class="field-input" type="text" value="¥1,100"/>
       </div>
 
-      <button class="btn-save" onclick="saveProfile()">保存する</button>
+      <button class="btn-save" id="profileSaveBtn" onclick="saveProfile()">保存する</button>
       <div style="height:20px;"></div>
     </div>
   </div>
@@ -528,6 +504,27 @@ html, body {
   <div class="nav-item" id="nav-profile" onclick="switchNav('profile')">
     <svg class="nav-icon" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="8" r="4" stroke="#c8a882" stroke-width="1.3"/><path d="M3 19C3 15.7 6.6 13 11 13C15.4 13 19 15.7 19 19" stroke="#c8a882" stroke-width="1.3" stroke-linecap="round"/></svg>
     <div class="nav-label">Profile</div>
+  </div>
+</div>
+
+<!-- WORK DETAIL MODAL -->
+<div class="modal" id="workDetailModal">
+  <div class="modal-inner" id="workDetailInner">
+    <div class="modal-handle"></div>
+    <div id="workDetailPhoto" class="work-detail-photo"></div>
+    <div id="workDetailGenre" class="work-detail-genre"></div>
+    <div id="workDetailComment" class="work-detail-comment"></div>
+    <div id="workDetailDate" class="work-detail-date"></div>
+    <div class="reserve-toggle" id="workDetailToggle">
+      <div class="toggle-label">RESERVE で公開する</div>
+      <div class="toggle-switch" id="workDetailToggleSwitch" onclick="toggleReservePublish()">
+        <div class="toggle-knob"></div>
+      </div>
+    </div>
+    <div class="work-detail-actions">
+      <button class="btn-outline" onclick="closeModal('workDetailModal')">閉じる</button>
+      <button class="btn-danger" onclick="deleteWork()">削除</button>
+    </div>
   </div>
 </div>
 
@@ -559,9 +556,9 @@ html, body {
     </div>
     <div class="field">
       <div class="field-label">コメント（任意）</div>
-      <input class="field-input" type="text" placeholder="施術のポイントなど"/>
+      <input class="field-input" id="addWorkComment" type="text" placeholder="施術のポイントなど"/>
     </div>
-    <button class="btn-save" style="margin-top:4px;" onclick="closeModal('addWorkModal')">写真を選択して追加</button>
+    <button class="btn-save" style="margin-top:4px;" onclick="saveNewWork()">追加する</button>
     <button class="btn-cancel" onclick="closeModal('addWorkModal')">キャンセル</button>
   </div>
 </div>
@@ -570,6 +567,61 @@ html, body {
 
 <script>
 var current = 's-home';
+var currentWorkId = null;
+var activeFilter = 'すべて';
+
+var workData = [
+  { id: 1, genre: 'カラー',   comment: 'バレイヤージュで透明感を。骨格に合わせてハイライトの入れ方を工夫しました。',     date: '2026.05.26', published: true,  bg: 'linear-gradient(145deg,#3a2e28,#1e1c1a)' },
+  { id: 2, genre: 'カット',   comment: 'くせ毛を活かした外ハネスタイル。丸顔に合わせてトップにボリュームを。',           date: '2026.05.24', published: true,  bg: 'linear-gradient(145deg,#28241e,#2e2a26)' },
+  { id: 3, genre: 'パーマ',   comment: 'デジタルパーマで柔らかいウェーブを。ダメージ最小限でふんわり感を出しました。',     date: '2026.05.22', published: false, bg: 'linear-gradient(145deg,#2c221e,#1c1a18)' },
+  { id: 4, genre: 'カラー',   comment: '春に向けてブラウンベージュに。ブリーチなしでもここまで明るくなります。',           date: '2026.05.20', published: true,  bg: 'linear-gradient(145deg,#241e1c,#2a2420)' },
+  { id: 5, genre: '縮毛矯正', comment: 'クセを伸ばしながら自然な動きを残して。毛先に軽さを出しました。',                   date: '2026.05.18', published: true,  bg: 'linear-gradient(145deg,#2e2a26,#241e1c)' },
+  { id: 6, genre: 'カット',   comment: 'ショートボブ。顔まわりを軽めに仕上げ、首元をすっきりと。',                         date: '2026.05.15', published: false, bg: 'linear-gradient(145deg,#1c1a18,#2c221e)' },
+  { id: 7, genre: 'カラー',   comment: 'インナーカラー。ブリーチ1回でオレンジ系のムラシャンで仕上げました。',               date: '2026.05.12', published: true,  bg: 'linear-gradient(145deg,#2a2420,#1e1c1a)' },
+  { id: 8, genre: 'パーマ',   comment: 'ゆるふわパーマ。エアウェーブでダメージレスに仕上げました。',                         date: '2026.05.08', published: true,  bg: 'linear-gradient(145deg,#221e1c,#2e2a26)' },
+];
+
+var nextId = 9;
+
+function renderArchive(filter) {
+  var grid = document.getElementById('archiveGrid');
+  var filtered = filter && filter !== 'すべて' ? workData.filter(function(w){ return w.genre === filter; }) : workData;
+  var html = '<div class="archive-add" onclick="openAddWork()"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><line x1="10" y1="3" x2="10" y2="17" stroke="#c8a882" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/><line x1="3" y1="10" x2="17" y2="10" stroke="#c8a882" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/></svg><span>追加</span></div>';
+  filtered.forEach(function(w) {
+    var reserveDot = w.published ? '<div style="position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:0.9;"></div>' : '';
+    html += '<div class="archive-item" onclick="openWorkDetail(' + w.id + ')"><div style="width:100%;height:100%;' + w.bg + ';"></div><div class="archive-tag">' + w.genre + '</div>' + reserveDot + '</div>';
+  });
+  grid.innerHTML = html;
+  document.getElementById('archiveCount').textContent = workData.length + ' works';
+}
+
+function openWorkDetail(id) {
+  var w = workData.find(function(x){ return x.id === id; });
+  if (!w) return;
+  currentWorkId = id;
+  document.getElementById('workDetailPhoto').style.background = w.bg;
+  document.getElementById('workDetailGenre').textContent = w.genre;
+  document.getElementById('workDetailComment').textContent = w.comment;
+  document.getElementById('workDetailDate').textContent = w.date;
+  var sw = document.getElementById('workDetailToggleSwitch');
+  w.published ? sw.classList.add('on') : sw.classList.remove('on');
+  openModal('workDetailModal');
+}
+
+function toggleReservePublish() {
+  var w = workData.find(function(x){ return x.id === currentWorkId; });
+  if (!w) return;
+  w.published = !w.published;
+  var sw = document.getElementById('workDetailToggleSwitch');
+  w.published ? sw.classList.add('on') : sw.classList.remove('on');
+}
+
+function deleteWork() {
+  if (!currentWorkId) return;
+  workData = workData.filter(function(x){ return x.id !== currentWorkId; });
+  closeModal('workDetailModal');
+  renderArchive(activeFilter);
+}
 
 function switchNav(tab) {
   var map = { home: 's-home', archive: 's-archive', timeline: 's-timeline', profile: 's-profile' };
@@ -628,15 +680,39 @@ function saveMemo() {
 function toggleGenre(el) { el.classList.toggle('active'); }
 
 function filterArchive(el) {
-  document.querySelectorAll('.genre-tag').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('#s-archive .genre-tag').forEach(function(t) { t.classList.remove('active'); });
   el.classList.add('active');
+  activeFilter = el.textContent;
+  renderArchive(activeFilter);
+}
+
+function saveNewWork() {
+  var tags = document.querySelectorAll('#addWorkModal .genre-tag.active');
+  var genre = tags.length > 0 ? tags[0].textContent : 'カット';
+  var comment = document.getElementById('addWorkComment').value.trim() || '（コメントなし）';
+  var bgs = [
+    'linear-gradient(145deg,#3a2e28,#1e1c1a)',
+    'linear-gradient(145deg,#28241e,#2e2a26)',
+    'linear-gradient(145deg,#2c221e,#1c1a18)',
+    'linear-gradient(145deg,#241e1c,#2a2420)',
+  ];
+  var today = new Date();
+  var dateStr = today.getFullYear() + '.' + String(today.getMonth()+1).padStart(2,'0') + '.' + String(today.getDate()).padStart(2,'0');
+  workData.unshift({ id: nextId++, genre: genre, comment: comment, date: dateStr, published: false, bg: bgs[Math.floor(Math.random()*bgs.length)] });
+  closeModal('addWorkModal');
+  document.getElementById('addWorkComment').value = '';
+  document.querySelectorAll('#addWorkModal .genre-tag').forEach(function(t){ t.classList.remove('active'); });
+  renderArchive(activeFilter);
+  document.getElementById('archiveCount').textContent = workData.length + ' works';
 }
 
 function saveProfile() {
-  var btn = document.querySelector('.btn-save');
+  var btn = document.getElementById('profileSaveBtn');
   btn.textContent = '保存しました';
   setTimeout(function() { btn.textContent = '保存する'; }, 2000);
 }
+
+renderArchive('すべて');
 </script>
 </body>
 </html>
