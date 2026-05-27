@@ -200,10 +200,11 @@ html, body {
 .reserve-badge-text { font-size: 11px; color: var(--gold); line-height: 1.5; }
 
 /* MODAL */
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
-.modal.open { opacity: 1; pointer-events: all; }
-.modal-inner { width: 100%; background: var(--bg2); border-radius: 4px 4px 0 0; padding: 24px 20px 40px; max-height: 85vh; overflow-y: auto; }
-.modal-handle { width: 36px; height: 3px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: flex; align-items: flex-end; visibility: hidden; opacity: 0; transition: opacity 0.3s ease, visibility 0.3s ease; }
+.modal.open { visibility: visible; opacity: 1; }
+.modal-inner { width: 100%; background: var(--bg2); border-radius: 16px 16px 0 0; border-top: 1px solid var(--gold-border); padding: 24px 20px 40px; max-height: 85vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+.modal.open .modal-inner { transform: translateY(0); }
+.modal-handle { width: 40px; height: 3px; background: rgba(232,228,220,0.15); border-radius: 2px; margin: 0 auto 20px; }
 .modal-title { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; font-family: 'Josefin Sans',sans-serif; }
 .btn-cancel { width: 100%; padding: 13px; background: transparent; border: 1px solid var(--border); border-radius: 2px; color: var(--muted); font-size: 12px; letter-spacing: 0.12em; cursor: pointer; font-family: 'Josefin Sans',sans-serif; margin-top: 8px; }
 
@@ -558,7 +559,8 @@ html, body {
       <div class="field-label">コメント（任意）</div>
       <input class="field-input" id="addWorkComment" type="text" placeholder="施術のポイントなど"/>
     </div>
-    <button class="btn-save" style="margin-top:4px;" onclick="saveNewWork()">追加する</button>
+    <input type="file" id="workPhotoInput" accept="image/*" style="display:none;" onchange="handlePhotoSelect()">
+    <button class="btn-save" style="margin-top:4px;" onclick="saveNewWork()">写真を選んで追加する</button>
     <button class="btn-cancel" onclick="closeModal('addWorkModal')">キャンセル</button>
   </div>
 </div>
@@ -589,7 +591,10 @@ function renderArchive(filter) {
   var html = '<div class="archive-add" onclick="openAddWork()"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><line x1="10" y1="3" x2="10" y2="17" stroke="#c8a882" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/><line x1="3" y1="10" x2="17" y2="10" stroke="#c8a882" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/></svg><span>追加</span></div>';
   filtered.forEach(function(w) {
     var reserveDot = w.published ? '<div style="position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:0.9;"></div>' : '';
-    html += '<div class="archive-item" onclick="openWorkDetail(' + w.id + ')"><div style="width:100%;height:100%;' + w.bg + ';"></div><div class="archive-tag">' + w.genre + '</div>' + reserveDot + '</div>';
+    var photoStyle = w.imageUrl
+      ? 'background-image:url(' + w.imageUrl + ');background-size:cover;background-position:center;'
+      : 'background:' + w.bg + ';';
+    html += '<div class="archive-item" onclick="openWorkDetail(' + w.id + ')"><div style="width:100%;height:100%;' + photoStyle + '"></div><div class="archive-tag">' + w.genre + '</div>' + reserveDot + '</div>';
   });
   grid.innerHTML = html;
   document.getElementById('archiveCount').textContent = workData.length + ' works';
@@ -599,7 +604,16 @@ function openWorkDetail(id) {
   var w = workData.find(function(x){ return x.id === id; });
   if (!w) return;
   currentWorkId = id;
-  document.getElementById('workDetailPhoto').style.background = w.bg;
+  var photoEl = document.getElementById('workDetailPhoto');
+  if (w.imageUrl) {
+    photoEl.style.backgroundImage = 'url(' + w.imageUrl + ')';
+    photoEl.style.backgroundSize = 'cover';
+    photoEl.style.backgroundPosition = 'center';
+    photoEl.style.background = '';
+  } else {
+    photoEl.style.background = w.bg;
+    photoEl.style.backgroundImage = '';
+  }
   document.getElementById('workDetailGenre').textContent = w.genre;
   document.getElementById('workDetailComment').textContent = w.comment;
   document.getElementById('workDetailDate').textContent = w.date;
@@ -645,6 +659,7 @@ function openModal(id) {
 
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
+  if (id === 'workDetailModal') renderArchive(activeFilter);
 }
 
 function setupSwipeToClose(inner, modalId) {
@@ -663,7 +678,9 @@ function setupSwipeToClose(inner, modalId) {
     var dy = e.changedTouches[0].clientY - startY;
     inner.style.transition = '';
     inner.style.transform = '';
-    if (dy > 80 && inner.scrollTop === 0) closeModal(modalId);
+    if (dy > 80 && inner.scrollTop === 0) {
+      closeModal(modalId);
+    }
   });
 }
 
@@ -687,23 +704,24 @@ function filterArchive(el) {
 }
 
 function saveNewWork() {
+  document.getElementById('workPhotoInput').click();
+}
+
+function handlePhotoSelect() {
+  var input = document.getElementById('workPhotoInput');
+  if (!input.files || !input.files[0]) return;
+  var imageUrl = URL.createObjectURL(input.files[0]);
   var tags = document.querySelectorAll('#addWorkModal .genre-tag.active');
   var genre = tags.length > 0 ? tags[0].textContent : 'カット';
   var comment = document.getElementById('addWorkComment').value.trim() || '（コメントなし）';
-  var bgs = [
-    'linear-gradient(145deg,#3a2e28,#1e1c1a)',
-    'linear-gradient(145deg,#28241e,#2e2a26)',
-    'linear-gradient(145deg,#2c221e,#1c1a18)',
-    'linear-gradient(145deg,#241e1c,#2a2420)',
-  ];
   var today = new Date();
   var dateStr = today.getFullYear() + '.' + String(today.getMonth()+1).padStart(2,'0') + '.' + String(today.getDate()).padStart(2,'0');
-  workData.unshift({ id: nextId++, genre: genre, comment: comment, date: dateStr, published: false, bg: bgs[Math.floor(Math.random()*bgs.length)] });
+  workData.unshift({ id: nextId++, genre: genre, comment: comment, date: dateStr, published: false, imageUrl: imageUrl, bg: 'linear-gradient(145deg,#3a2e28,#1e1c1a)' });
   closeModal('addWorkModal');
   document.getElementById('addWorkComment').value = '';
   document.querySelectorAll('#addWorkModal .genre-tag').forEach(function(t){ t.classList.remove('active'); });
+  input.value = '';
   renderArchive(activeFilter);
-  document.getElementById('archiveCount').textContent = workData.length + ' works';
 }
 
 function saveProfile() {
