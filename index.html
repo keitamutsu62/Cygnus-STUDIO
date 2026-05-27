@@ -312,14 +312,17 @@ html, body {
     <div class="section" style="padding-top:0;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div class="section-title" style="margin-bottom:0;">今日の予約</div>
-        <div class="loop-badge">LOOP 連携予定</div>
+        <div class="loop-badge" style="border-color:rgba(200,168,130,0.2);color:rgba(200,168,130,0.7);background:rgba(200,168,130,0.06);">RESERVE 連携予定</div>
       </div>
       <div id="apptList"></div>
     </div>
 
     <!-- 今月のサマリ -->
     <div class="section" style="margin-top:20px;">
-      <div class="section-title">今月の記録</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="section-title" style="margin-bottom:0;">今月の記録</div>
+        <div class="loop-badge">LOOP 連携予定</div>
+      </div>
       <div class="stat-grid">
         <div class="card">
           <div class="card-label">売上</div>
@@ -344,7 +347,10 @@ html, body {
 
     <!-- 最近の施術 -->
     <div class="section">
-      <div class="section-title">最近の施術</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="section-title" style="margin-bottom:0;">最近の施術</div>
+        <div class="loop-badge">LOOP 連携予定</div>
+      </div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         <div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;">
           <div>
@@ -437,7 +443,11 @@ html, body {
     </div>
 
     <!-- 累計サマリ -->
-    <div style="padding:16px 20px;">
+    <div style="padding:0 20px 16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);font-family:'Josefin Sans',sans-serif;">Cumulative</div>
+        <div class="loop-badge">LOOP 連携予定</div>
+      </div>
       <div class="stat-grid">
         <div class="card">
           <div class="card-label">累計施術</div>
@@ -476,12 +486,14 @@ html, body {
   <div class="scroll">
     <div style="padding:24px 20px 0;">
       <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="handleAvatarSelect()">
-      <div class="profile-avatar" onclick="document.getElementById('avatarInput').click()" style="cursor:pointer;">
-        <div id="profileAvatarImg" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="5" stroke="#c8a882" stroke-width="1.2" opacity="0.5"/><path d="M4 24C4 19.6 8.5 16 14 16C19.5 16 24 19.6 24 24" stroke="#c8a882" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/></svg>
+      <div style="position:relative;width:72px;height:72px;margin:0 auto 16px;cursor:pointer;" onclick="document.getElementById('avatarInput').click()">
+        <div class="profile-avatar" style="margin:0;width:72px;height:72px;">
+          <div id="profileAvatarImg" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="5" stroke="#c8a882" stroke-width="1.2" opacity="0.5"/><path d="M4 24C4 19.6 8.5 16 14 16C19.5 16 24 19.6 24 24" stroke="#c8a882" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/></svg>
+          </div>
         </div>
-        <div class="avatar-edit-hint">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 7.5L3 9.5L9 1.5" stroke="#1a1816" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="avatar-edit-hint" style="position:absolute;bottom:1px;right:1px;">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M7 1L9 3L3.5 8.5L1 9L1.5 6.5Z" stroke="#1a1816" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
       </div>
       <div class="profile-name-block">
@@ -644,7 +656,8 @@ html, body {
       <input type="checkbox" id="careerCurrent" onchange="toggleCareerCurrent()" style="width:16px;height:16px;accent-color:var(--gold);">
       <label for="careerCurrent" style="font-size:12px;color:var(--muted);">現在在籍中</label>
     </div>
-    <button class="btn-save" onclick="saveCareer()">追加する</button>
+    <button class="btn-save" id="careerSaveBtn" onclick="saveCareer()">追加する</button>
+    <button class="btn-danger" id="careerDeleteBtn" style="width:100%;padding:13px;margin-top:8px;display:none;" onclick="deleteCareer()">このキャリアを削除</button>
     <button class="btn-cancel" onclick="closeModal('addCareerModal')">キャンセル</button>
   </div>
 </div>
@@ -732,11 +745,12 @@ function renderTimeline() {
   document.getElementById('tlTotal').textContent = total.toLocaleString();
   document.getElementById('tlStores').textContent = careerData.length;
   list.innerHTML = careerData.map(function(c) {
-    var period = c.startYear + '年' + c.startMonth + '月 — ' + (c.current ? '現在' : c.endYear + '年' + c.endMonth + '月');
+    var endStr = c.current ? '現在' : (c.endYear && c.endMonth ? c.endYear + '年' + c.endMonth + '月' : '—');
+    var period = c.startYear + '年' + c.startMonth + '月 — ' + endStr;
     var chips = '';
     if (c.count) chips += '<div style="font-size:10px;color:var(--muted);background:var(--bg3);padding:4px 10px;border-radius:2px;">施術 ' + c.count.toLocaleString() + '件</div>';
-    if (c.note) chips += '<div style="font-size:10px;color:var(--muted);background:var(--bg3);padding:4px 10px;border-radius:2px;">' + c.note + '</div>';
-    return '<div class="timeline-item"><div class="timeline-dot' + (c.current ? ' current' : '') + '"></div><div class="timeline-body"><div class="timeline-period">' + period + '</div><div class="timeline-salon">' + c.salon + '</div><div class="timeline-role">' + c.role + '</div>' + (chips ? '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">' + chips + '</div>' : '') + '</div></div>';
+    if (c.note)  chips += '<div style="font-size:10px;color:var(--muted);background:var(--bg3);padding:4px 10px;border-radius:2px;">' + c.note + '</div>';
+    return '<div class="timeline-item" onclick="editCareer(' + c.id + ')" style="cursor:pointer;"><div class="timeline-dot' + (c.current ? ' current' : '') + '"></div><div class="timeline-body"><div class="timeline-period">' + period + '</div><div class="timeline-salon">' + c.salon + '</div><div class="timeline-role">' + c.role + '</div>' + (chips ? '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">' + chips + '</div>' : '') + '</div></div>';
   }).join('');
 }
 
@@ -761,14 +775,47 @@ function buildMonthOptions(selId, selected) {
   }
 }
 
+var editCareerId = null;
+
 function openAddCareer() {
+  editCareerId = null;
   buildYearOptions('careerStartYear', new Date().getFullYear());
   buildMonthOptions('careerStartMonth', 1);
   buildYearOptions('careerEndYear', new Date().getFullYear());
   buildMonthOptions('careerEndMonth', 1);
+  document.getElementById('careerSalon').value = '';
+  document.getElementById('careerRole').value  = '';
   document.getElementById('careerCurrent').checked = false;
   document.getElementById('careerEndField').style.display = 'block';
+  document.querySelector('#addCareerModal .modal-title').textContent = 'キャリアを追加';
+  document.getElementById('careerSaveBtn').textContent = '追加する';
+  document.getElementById('careerDeleteBtn').style.display = 'none';
   openModal('addCareerModal');
+}
+
+function editCareer(id) {
+  var c = careerData.find(function(x){ return x.id === id; });
+  if (!c) return;
+  editCareerId = id;
+  buildYearOptions('careerStartYear', c.startYear);
+  buildMonthOptions('careerStartMonth', c.startMonth);
+  buildYearOptions('careerEndYear', c.endYear || new Date().getFullYear());
+  buildMonthOptions('careerEndMonth', c.endMonth || 1);
+  document.getElementById('careerSalon').value   = c.salon;
+  document.getElementById('careerRole').value    = c.role;
+  document.getElementById('careerCurrent').checked = c.current;
+  document.getElementById('careerEndField').style.display = c.current ? 'none' : 'block';
+  document.querySelector('#addCareerModal .modal-title').textContent = 'キャリアを編集';
+  document.getElementById('careerSaveBtn').textContent = '更新する';
+  document.getElementById('careerDeleteBtn').style.display = 'block';
+  openModal('addCareerModal');
+}
+
+function deleteCareer() {
+  if (!editCareerId) return;
+  careerData = careerData.filter(function(c){ return c.id !== editCareerId; });
+  closeModal('addCareerModal');
+  renderTimeline();
 }
 
 function toggleCareerCurrent() {
@@ -784,14 +831,27 @@ function saveCareer() {
   var isCurrent  = document.getElementById('careerCurrent').checked;
   var endYear    = isCurrent ? null : parseInt(document.getElementById('careerEndYear').value);
   var endMonth   = isCurrent ? null : parseInt(document.getElementById('careerEndMonth').value);
-  if (isCurrent) careerData.forEach(function(c){ c.current = false; });
-  var entry = { id:nextCareerId++, salon:salon, role:role, startYear:startYear, startMonth:startMonth, endYear:endYear, endMonth:endMonth, current:isCurrent, count:0, note:'' };
-  careerData.push(entry);
+
+  if (editCareerId) {
+    var c = careerData.find(function(x){ return x.id === editCareerId; });
+    if (c) {
+      if (isCurrent && !c.current) {
+        careerData.forEach(function(x){ if (x.current) { x.current = false; if (!x.endYear) { x.endYear = startYear; x.endMonth = startMonth > 1 ? startMonth - 1 : 12; if (startMonth === 1) x.endYear--; } } });
+      }
+      c.salon = salon; c.role = role; c.startYear = startYear; c.startMonth = startMonth;
+      c.endYear = endYear; c.endMonth = endMonth; c.current = isCurrent;
+    }
+  } else {
+    if (isCurrent) {
+      careerData.forEach(function(x){ if (x.current) { x.current = false; if (!x.endYear) { x.endYear = startYear; x.endMonth = startMonth > 1 ? startMonth - 1 : 12; if (startMonth === 1) x.endYear--; } } });
+    }
+    careerData.push({ id:nextCareerId++, salon:salon, role:role, startYear:startYear, startMonth:startMonth, endYear:endYear, endMonth:endMonth, current:isCurrent, count:0, note:'' });
+  }
+
   careerData.sort(function(a,b){ return b.startYear - a.startYear || b.startMonth - a.startMonth; });
-  if (isCurrent) { var idx = careerData.indexOf(entry); careerData.splice(idx,1); careerData.unshift(entry); }
+  var cur = careerData.find(function(x){ return x.current; });
+  if (cur) { careerData.splice(careerData.indexOf(cur),1); careerData.unshift(cur); }
   closeModal('addCareerModal');
-  document.getElementById('careerSalon').value = '';
-  document.getElementById('careerRole').value  = '';
   renderTimeline();
 }
 
