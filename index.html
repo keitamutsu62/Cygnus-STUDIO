@@ -758,15 +758,60 @@ function fetchRecentTreatments() {
   ]);
 }
 
-/* [STUDIO DATA]  GET /api/studio/memos?stylist_id={CYGNUS_ID}
-   res: Array<{ date: string, text: string }>
-   スタイリスト自身のメモログ。STUDIOが保持するデータ。          */
+/* [STUDIO DATA]  GET /api/studio/memos
+   query: { stylist_id, from?: ISO8601, to?: ISO8601, cursor?: string, limit?: number }
+   res:   { memos: Array<{ date:string, text:string }>,
+            hasMore: boolean, nextCursor: string }
+   DBは全件永久保存。UIは直近1年デフォルト＋cursor方式で過去に遡る。   */
+function fetchMemoLog(opts) {
+  // opts: { from?, cursor?, limit? }
+  // ダミー: 全件返す（本番はfrom/cursorで絞る）
+  return Promise.resolve({ memos: memoLog, hasMore: false, nextCursor: null });
+}
+
 var memoLog = [
-  { date: '2026年5月26日', text: '田中様のバレイヤージュ、今日は光の当たり方がすごく綺麗に出せた。ブリーチの塗布量を少し変えたのが良かったかも。次回も試してみる。' },
-  { date: '2026年5月23日', text: '縮毛矯正の薬剤、夏に向けて見直しが必要かもしれない。湿気の影響が出始めてる気がする。' },
-  { date: '2026年5月20日', text: '新規の方が「インスタで見た」と来てくれた。作品をもっとこまめに上げたほうがいいかな。' },
-  { date: '2026年5月15日', text: 'リピート率が少し落ちた月だった。連絡のタイミングを見直してみる。' },
+  { date:'2026年5月26日', text:'田中様のバレイヤージュ、今日は光の当たり方がすごく綺麗に出せた。ブリーチの塗布量を少し変えたのが良かったかも。次回も試してみる。' },
+  { date:'2026年5月23日', text:'縮毛矯正の薬剤、夏に向けて見直しが必要かもしれない。湿気の影響が出始めてる気がする。' },
+  { date:'2026年5月20日', text:'新規の方が「インスタで見た」と来てくれた。作品をもっとこまめに上げたほうがいいかな。' },
+  { date:'2026年5月15日', text:'リピート率が少し落ちた月だった。連絡のタイミングを見直してみる。' },
+  { date:'2026年4月18日', text:'春のカラーシーズン、問い合わせが増えてきた。メニュー表を更新しようかと思う。' },
+  { date:'2026年3月 3日', text:'デジタルパーマの技術を磨き直したくてセミナーに申し込んだ。楽しみ。' },
+  // 以下は1年以上前（展開しないと見えない）
+  { date:'2025年4月22日', text:'新しいカラー剤を導入して3ヶ月。ダメージの出方が明らかに違う。お客様の反応もいい。' },
+  { date:'2025年2月14日', text:'バレンタインデーに予約が集中した。来年は早めに枠を調整しよう。' },
+  { date:'2025年1月 8日', text:'年明け最初の週。常連の方々が戻ってきてくれてほっとした。' },
+  { date:'2024年11月20日', text:'独立してちょうど3年。売上より、続けられていることがうれしい。' },
 ];
+
+function parseMemoDate(dateStr) {
+  var m = dateStr.match(/(\d+)年(\d+)月\s*(\d+)日/);
+  return m ? new Date(+m[1], +m[2]-1, +m[3]) : new Date(0);
+}
+
+function groupByMonth(memos) {
+  var groups = {}, order = [];
+  memos.forEach(function(m) {
+    var key = m.date.replace(/(\d+年\d+月)\s*\d+日/, '$1');
+    if (!groups[key]) { groups[key] = []; order.push(key); }
+    groups[key].push(m);
+  });
+  return order.map(function(k){ return { month: k, items: groups[k] }; });
+}
+
+function renderMemoGroups(groups) {
+  return groups.map(function(g) {
+    return '<div style="margin-bottom:20px;">'
+      + '<div style="font-size:9px;letter-spacing:0.22em;color:var(--gold);font-family:\'Josefin Sans\',sans-serif;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">' + g.month + '</div>'
+      + g.items.map(function(m) {
+          var day = m.date.replace(/\d+年\d+月\s*(\d+)日/, '$1日');
+          return '<div style="margin-bottom:12px;">'
+            + '<div style="font-size:9px;color:var(--muted);font-family:\'Josefin Sans\',sans-serif;letter-spacing:0.1em;margin-bottom:5px;">' + day + '</div>'
+            + '<div style="font-size:13px;color:var(--text);line-height:1.75;">' + m.text + '</div>'
+            + '</div>';
+        }).join('')
+      + '</div>';
+  }).join('');
+}
 
 function updateMemoLogCount() {
   var el = document.getElementById('memoLogCount');
@@ -774,14 +819,28 @@ function updateMemoLogCount() {
 }
 
 function openMemoLog() {
-  var list = document.getElementById('memoLogList');
-  list.innerHTML = memoLog.map(function(m) {
-    return '<div style="border-bottom:1px solid var(--border);padding-bottom:12px;">'
-      + '<div style="font-size:9px;color:var(--gold);font-family:\'Josefin Sans\',sans-serif;letter-spacing:0.12em;margin-bottom:6px;">' + m.date + '</div>'
-      + '<div style="font-size:13px;color:var(--text);line-height:1.7;">' + m.text + '</div>'
+  var cutoff = new Date();
+  cutoff.setFullYear(cutoff.getFullYear() - 1);
+  var recent = memoLog.filter(function(m){ return parseMemoDate(m.date) >= cutoff; });
+  var older  = memoLog.filter(function(m){ return parseMemoDate(m.date) <  cutoff; });
+
+  var html = renderMemoGroups(groupByMonth(recent));
+  if (older.length > 0) {
+    html += '<div id="olderExpand" style="text-align:center;padding:12px 0;cursor:pointer;border-top:1px solid var(--border);" onclick="expandOlderMemos()">'
+      + '<span style="font-size:10px;color:var(--muted);font-family:\'Josefin Sans\',sans-serif;letter-spacing:0.12em;">1年以上前の記録を見る（' + older.length + '件）</span>'
+      + '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="display:inline-block;vertical-align:middle;margin-left:4px;"><polyline points="2,4 6,8 10,4" stroke="rgba(232,228,220,0.4)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
       + '</div>';
-  }).join('');
+  }
+  document.getElementById('memoLogList').innerHTML = html;
   openModal('memoLogModal');
+}
+
+function expandOlderMemos() {
+  var cutoff = new Date();
+  cutoff.setFullYear(cutoff.getFullYear() - 1);
+  var older = memoLog.filter(function(m){ return parseMemoDate(m.date) < cutoff; });
+  var el = document.getElementById('olderExpand');
+  if (el) el.outerHTML = renderMemoGroups(groupByMonth(older));
 }
 
 /* [LOOP AI API]  POST /api/loop/ai/bio-suggestion
