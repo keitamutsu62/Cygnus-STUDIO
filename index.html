@@ -326,21 +326,21 @@ html, body {
       <div class="stat-grid">
         <div class="card">
           <div class="card-label">売上</div>
-          <div class="card-value"><span>¥</span>312,400</div>
-          <div class="card-sub">+8.2% 先月比</div>
+          <div class="card-value"><span>¥</span><span id="statRevenue">—</span></div>
+          <div class="card-sub" id="statRevenueDiff"></div>
         </div>
         <div class="card">
           <div class="card-label">施術件数</div>
-          <div class="card-value">38<span style="font-size:13px;color:var(--muted);margin-left:2px;">件</span></div>
-          <div class="card-sub">指名率 74%</div>
+          <div class="card-value"><span id="statTreatCount">—</span><span style="font-size:13px;color:var(--muted);margin-left:2px;">件</span></div>
+          <div class="card-sub" id="statNomRate"></div>
         </div>
         <div class="card">
           <div class="card-label">リピート率</div>
-          <div class="card-value">68<span style="font-size:18px;color:var(--muted);margin-left:2px;">%</span></div>
+          <div class="card-value"><span id="statRepeatRate">—</span><span style="font-size:18px;color:var(--muted);margin-left:2px;">%</span></div>
         </div>
         <div class="card">
           <div class="card-label">新規顧客</div>
-          <div class="card-value">12<span style="font-size:13px;color:var(--muted);margin-left:2px;">名</span></div>
+          <div class="card-value"><span id="statNewCustomers">—</span><span style="font-size:13px;color:var(--muted);margin-left:2px;">名</span></div>
         </div>
       </div>
     </div>
@@ -351,29 +351,7 @@ html, body {
         <div class="section-title" style="margin-bottom:0;">最近の施術</div>
         <div class="loop-badge">LOOP 連携予定</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;">
-          <div>
-            <div style="font-size:13px;margin-bottom:2px;">カット + バレイヤージュカラー</div>
-            <div style="font-size:10px;color:var(--muted);">本日 14:30 · 田中様</div>
-          </div>
-          <div style="font-family:'Josefin Sans',sans-serif;font-weight:100;font-size:14px;color:var(--gold);">¥14,300</div>
-        </div>
-        <div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;">
-          <div>
-            <div style="font-size:13px;margin-bottom:2px;">カット + オーガニック縮毛矯正</div>
-            <div style="font-size:10px;color:var(--muted);">本日 11:00 · 佐藤様</div>
-          </div>
-          <div style="font-family:'Josefin Sans',sans-serif;font-weight:100;font-size:14px;color:var(--gold);">¥15,950</div>
-        </div>
-        <div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;">
-          <div>
-            <div style="font-size:13px;margin-bottom:2px;">リタッチカラー</div>
-            <div style="font-size:10px;color:var(--muted);">昨日 16:00 · 山田様</div>
-          </div>
-          <div style="font-family:'Josefin Sans',sans-serif;font-weight:100;font-size:14px;color:var(--gold);">¥8,250</div>
-        </div>
-      </div>
+      <div id="recentTreatments" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
 
     <!-- 一言メモ -->
@@ -706,26 +684,103 @@ var currentWorkId = null;
 var activeFilter = 'すべて';
 var profileAvatarUrl = null;
 
-/* ── Today's date ── */
+/* ═══════════════════════════════════════════════════════════════
+   CYGNUS STUDIO — DATA LAYER
+   本番移行時: 各 fetch* 関数内の Promise.resolve(...)  を
+   fetch('/api/...').then(r => r.json()) に差し替えるだけ。
+   CYGNUS_ID を認証セッションから取得するよう変更すること。
+   ═══════════════════════════════════════════════════════════════ */
+
+// 本番: 認証トークンから取得
+var CYGNUS_ID = 'stylist_takahashi_misaki';
+
+/* [RESERVE API]  GET /api/reserve/appointments/today?stylist_id={CYGNUS_ID}
+   res: Array<{ time, clientName, menu, price,
+                status: 'confirmed' | 'pending' }>                            */
+function fetchTodayAppointments() {
+  return Promise.resolve([
+    { time:'10:00', clientName:'鈴木様', menu:'カット + デジタルパーマ',         price:15400, status:'confirmed' },
+    { time:'13:30', clientName:'田中様', menu:'カット + バレイヤージュカラー',   price:14300, status:'confirmed' },
+    { time:'16:00', clientName:'山本様', menu:'リタッチカラー + トリートメント', price:10450, status:'pending'   },
+  ]);
+}
+
+/* [LOOP API]  GET /api/loop/stats/monthly?stylist_id={CYGNUS_ID}&year={y}&month={m}
+   res: { revenue, revenueDiff, treatmentCount, nominationRate,
+          repeatRate, newCustomers }                                           */
+function fetchMonthlyStats() {
+  return Promise.resolve({
+    revenue:312400, revenueDiff:8.2,
+    treatmentCount:38, nominationRate:74,
+    repeatRate:68, newCustomers:12
+  });
+}
+
+/* [LOOP API]  GET /api/loop/treatments/recent?stylist_id={CYGNUS_ID}&limit=3
+   res: Array<{ label, time, clientName, menu, price }>                       */
+function fetchRecentTreatments() {
+  return Promise.resolve([
+    { label:'今日', time:'14:30', clientName:'田中様', menu:'カット + バレイヤージュカラー', price:14300 },
+    { label:'今日', time:'11:00', clientName:'佐藤様', menu:'カット + オーガニック縮毛矯正', price:15950 },
+    { label:'昨日', time:'16:00', clientName:'山田様', menu:'リタッチカラー',               price:8250  },
+  ]);
+}
+
+/* [LOOP API]  GET /api/loop/treatments/count
+                   ?stylist_id={CYGNUS_ID}&from={ISO8601}&to={ISO8601}
+   res: { count: number }
+   ※ 在籍終了日が確定したタイミング（次のキャリア追加 / 手動編集時）に呼ぶ  */
+function fetchCareerTreatmentCount(startIso, endIso) {
+  var months = monthsBetween(startIso, endIso);
+  return Promise.resolve({ count: Math.round(months * 9.5) }); // ダミー: 月9.5件
+}
+
+function monthsBetween(isoA, isoB) {
+  var a = new Date(isoA), b = new Date(isoB);
+  return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+}
+function toIso(year, month) {
+  return year + '-' + String(month).padStart(2,'0') + '-01';
+}
+
+/* ─── Render ─────────────────────────────────────────────────── */
+
+function renderAppointments(appts) {
+  var el = document.getElementById('apptList');
+  if (!el) return;
+  el.innerHTML = appts.map(function(a) {
+    var pending = a.status === 'pending'
+      ? '<div style="width:5px;height:5px;border-radius:50%;background:rgba(200,168,130,0.5);flex-shrink:0;align-self:center;"></div>' : '';
+    return '<div class="appt-item">' + pending + '<div class="appt-time">' + a.time + '</div><div class="appt-info"><div class="appt-menu">' + a.menu + '</div><div class="appt-client">' + a.clientName + '</div></div><div class="appt-price">¥' + a.price.toLocaleString() + '</div></div>';
+  }).join('');
+}
+
+function renderMonthlyStats(s) {
+  document.getElementById('statRevenue').textContent     = s.revenue.toLocaleString();
+  document.getElementById('statRevenueDiff').textContent = (s.revenueDiff > 0 ? '+' : '') + s.revenueDiff + '% 先月比';
+  document.getElementById('statTreatCount').textContent  = s.treatmentCount;
+  document.getElementById('statNomRate').textContent     = '指名率 ' + s.nominationRate + '%';
+  document.getElementById('statRepeatRate').textContent  = s.repeatRate;
+  document.getElementById('statNewCustomers').textContent = s.newCustomers;
+}
+
+function renderRecentTreatments(treatments) {
+  var el = document.getElementById('recentTreatments');
+  if (!el) return;
+  el.innerHTML = treatments.map(function(t) {
+    return '<div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;"><div><div style="font-size:13px;margin-bottom:2px;">' + t.menu + '</div><div style="font-size:10px;color:var(--muted);">' + t.label + ' ' + t.time + ' · ' + t.clientName + '</div></div><div style="font-family:\'Josefin Sans\',sans-serif;font-weight:100;font-size:14px;color:var(--gold);">¥' + t.price.toLocaleString() + '</div></div>';
+  }).join('');
+}
+
+/* ─── Init ───────────────────────────────────────────────────── */
 (function() {
   var days = ['日','月','火','水','木','金','土'];
   var now = new Date();
   var el = document.getElementById('homeDate');
   if (el) el.textContent = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 · ' + days[now.getDay()] + '曜日';
-})();
-
-/* ── Appointments ── */
-var todayAppts = [
-  { time: '10:00', client: '鈴木様', menu: 'カット + デジタルパーマ',             price: 15400 },
-  { time: '13:30', client: '田中様', menu: 'カット + バレイヤージュカラー',       price: 14300 },
-  { time: '16:00', client: '山本様', menu: 'リタッチカラー + トリートメント',     price: 10450 },
-];
-(function() {
-  var el = document.getElementById('apptList');
-  if (!el) return;
-  el.innerHTML = todayAppts.map(function(a) {
-    return '<div class="appt-item"><div class="appt-time">' + a.time + '</div><div class="appt-info"><div class="appt-menu">' + a.menu + '</div><div class="appt-client">' + a.client + '</div></div><div class="appt-price">¥' + a.price.toLocaleString() + '</div></div>';
-  }).join('');
+  fetchTodayAppointments().then(renderAppointments);
+  fetchMonthlyStats().then(renderMonthlyStats);
+  fetchRecentTreatments().then(renderRecentTreatments);
 })();
 
 /* ── Career ── */
@@ -832,18 +887,42 @@ function saveCareer() {
   var endYear    = isCurrent ? null : parseInt(document.getElementById('careerEndYear').value);
   var endMonth   = isCurrent ? null : parseInt(document.getElementById('careerEndMonth').value);
 
+  var periodJustDefined = []; // 期間が今回初めて確定したキャリアを追跡
+
   if (editCareerId) {
     var c = careerData.find(function(x){ return x.id === editCareerId; });
     if (c) {
       if (isCurrent && !c.current) {
-        careerData.forEach(function(x){ if (x.current) { x.current = false; if (!x.endYear) { x.endYear = startYear; x.endMonth = startMonth > 1 ? startMonth - 1 : 12; if (startMonth === 1) x.endYear--; } } });
+        careerData.forEach(function(x){
+          if (x.current) {
+            x.current = false;
+            if (!x.endYear) {
+              x.endYear  = startYear;
+              x.endMonth = startMonth > 1 ? startMonth - 1 : 12;
+              if (startMonth === 1) x.endYear--;
+              periodJustDefined.push(x);
+            }
+          }
+        });
       }
+      var wasUndefined = !c.current && !c.endYear && endYear;
       c.salon = salon; c.role = role; c.startYear = startYear; c.startMonth = startMonth;
       c.endYear = endYear; c.endMonth = endMonth; c.current = isCurrent;
+      if (wasUndefined && endYear) periodJustDefined.push(c);
     }
   } else {
     if (isCurrent) {
-      careerData.forEach(function(x){ if (x.current) { x.current = false; if (!x.endYear) { x.endYear = startYear; x.endMonth = startMonth > 1 ? startMonth - 1 : 12; if (startMonth === 1) x.endYear--; } } });
+      careerData.forEach(function(x){
+        if (x.current) {
+          x.current = false;
+          if (!x.endYear) {
+            x.endYear  = startYear;
+            x.endMonth = startMonth > 1 ? startMonth - 1 : 12;
+            if (startMonth === 1) x.endYear--;
+            periodJustDefined.push(x);
+          }
+        }
+      });
     }
     careerData.push({ id:nextCareerId++, salon:salon, role:role, startYear:startYear, startMonth:startMonth, endYear:endYear, endMonth:endMonth, current:isCurrent, count:0, note:'' });
   }
@@ -852,7 +931,20 @@ function saveCareer() {
   var cur = careerData.find(function(x){ return x.current; });
   if (cur) { careerData.splice(careerData.indexOf(cur),1); careerData.unshift(cur); }
   closeModal('addCareerModal');
-  renderTimeline();
+
+  // 期間が確定したキャリアの施術件数を再取得
+  var pending = periodJustDefined.length;
+  if (pending === 0) { renderTimeline(); return; }
+  periodJustDefined.forEach(function(entry) {
+    fetchCareerTreatmentCount(
+      toIso(entry.startYear, entry.startMonth),
+      toIso(entry.endYear, entry.endMonth)
+    ).then(function(res) {
+      entry.count = res.count;
+      pending--;
+      if (pending === 0) renderTimeline();
+    });
+  });
 }
 
 renderTimeline();
