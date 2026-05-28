@@ -680,6 +680,10 @@ html, body {
     <div id="workDetailGenre" class="work-detail-genre"></div>
     <div id="workDetailComment" class="work-detail-comment"></div>
     <div id="workDetailDate" class="work-detail-date"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;margin-bottom:4px;border-bottom:1px solid var(--border);">
+      <div style="font-family:'Josefin Sans',sans-serif;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);">対応メニュー</div>
+      <div id="workDetailMenuName" style="font-size:13px;color:var(--text);">—</div>
+    </div>
     <div class="reserve-toggle" id="workDetailToggle">
       <div class="toggle-label">RESERVE で公開する</div>
       <div class="toggle-switch" id="workDetailToggleSwitch" onclick="toggleReservePublish()">
@@ -769,6 +773,17 @@ html, body {
     <div class="field">
       <div class="field-label">コメント（任意）</div>
       <input class="field-input" id="addWorkComment" type="text" placeholder="施術のポイントなど"/>
+    </div>
+    <div class="field">
+      <div class="field-label">対応メニュー</div>
+      <select class="field-input" id="addWorkMenu">
+        <option value="">選択してください</option>
+        <option value="cut">カット　¥7,700</option>
+        <option value="cut_color">カット + カラー　¥12,800</option>
+        <option value="cut_treatment">カット + トリートメント　¥10,500</option>
+        <option value="cut_perm">カット + パーマ　¥14,500</option>
+        <option value="straight">縮毛矯正　¥18,000</option>
+      </select>
     </div>
     <input type="file" id="workPhotoInput" accept="image/*" style="display:none;" onchange="handlePhotoSelect()">
     <button class="btn-save" style="margin-top:4px;" onclick="saveNewWork()">写真を選んで追加する</button>
@@ -1201,15 +1216,24 @@ function handleAvatarSelect() {
   input.value = '';
 }
 
+// [STUDIO / LOOP API] GET /api/studio/menus?stylist_id={id}
+var menuData = [
+  { id: 'cut',           name: 'カット',                 price: 7700,  duration: '約60分'  },
+  { id: 'cut_color',     name: 'カット + カラー',          price: 12800, duration: '約120分' },
+  { id: 'cut_treatment', name: 'カット + トリートメント',  price: 10500, duration: '約90分'  },
+  { id: 'cut_perm',      name: 'カット + パーマ',          price: 14500, duration: '約120分' },
+  { id: 'straight',      name: '縮毛矯正',                price: 18000, duration: '約150分' }
+];
+
 var workData = [
-  { id: 1, genre: 'カラー',   comment: 'バレイヤージュで透明感を。骨格に合わせてハイライトの入れ方を工夫しました。',     date: '2026.05.26', published: true,  bg: 'linear-gradient(145deg,#3a2e28,#1e1c1a)' },
-  { id: 2, genre: 'カット',   comment: 'くせ毛を活かした外ハネスタイル。丸顔に合わせてトップにボリュームを。',           date: '2026.05.24', published: true,  bg: 'linear-gradient(145deg,#28241e,#2e2a26)' },
-  { id: 3, genre: 'パーマ',   comment: 'デジタルパーマで柔らかいウェーブを。ダメージ最小限でふんわり感を出しました。',     date: '2026.05.22', published: false, bg: 'linear-gradient(145deg,#2c221e,#1c1a18)' },
-  { id: 4, genre: 'カラー',   comment: '春に向けてブラウンベージュに。ブリーチなしでもここまで明るくなります。',           date: '2026.05.20', published: true,  bg: 'linear-gradient(145deg,#241e1c,#2a2420)' },
-  { id: 5, genre: '縮毛矯正', comment: 'クセを伸ばしながら自然な動きを残して。毛先に軽さを出しました。',                   date: '2026.05.18', published: true,  bg: 'linear-gradient(145deg,#2e2a26,#241e1c)' },
-  { id: 6, genre: 'カット',   comment: 'ショートボブ。顔まわりを軽めに仕上げ、首元をすっきりと。',                         date: '2026.05.15', published: false, bg: 'linear-gradient(145deg,#1c1a18,#2c221e)' },
-  { id: 7, genre: 'カラー',   comment: 'インナーカラー。ブリーチ1回でオレンジ系のムラシャンで仕上げました。',               date: '2026.05.12', published: true,  bg: 'linear-gradient(145deg,#2a2420,#1e1c1a)' },
-  { id: 8, genre: 'パーマ',   comment: 'ゆるふわパーマ。エアウェーブでダメージレスに仕上げました。',                         date: '2026.05.08', published: true,  bg: 'linear-gradient(145deg,#221e1c,#2e2a26)' },
+  { id: 1, genre: 'カラー',   menuId: 'cut_color',     comment: 'バレイヤージュで透明感を。骨格に合わせてハイライトの入れ方を工夫しました。',     date: '2026.05.26', published: true,  bg: 'linear-gradient(145deg,#3a2e28,#1e1c1a)' },
+  { id: 2, genre: 'カット',   menuId: 'cut',           comment: 'くせ毛を活かした外ハネスタイル。丸顔に合わせてトップにボリュームを。',           date: '2026.05.24', published: true,  bg: 'linear-gradient(145deg,#28241e,#2e2a26)' },
+  { id: 3, genre: 'パーマ',   menuId: 'cut_perm',      comment: 'デジタルパーマで柔らかいウェーブを。ダメージ最小限でふんわり感を出しました。',     date: '2026.05.22', published: false, bg: 'linear-gradient(145deg,#2c221e,#1c1a18)' },
+  { id: 4, genre: 'カラー',   menuId: 'cut_color',     comment: '春に向けてブラウンベージュに。ブリーチなしでもここまで明るくなります。',           date: '2026.05.20', published: true,  bg: 'linear-gradient(145deg,#241e1c,#2a2420)' },
+  { id: 5, genre: '縮毛矯正', menuId: 'straight',      comment: 'クセを伸ばしながら自然な動きを残して。毛先に軽さを出しました。',                   date: '2026.05.18', published: true,  bg: 'linear-gradient(145deg,#2e2a26,#241e1c)' },
+  { id: 6, genre: 'カット',   menuId: 'cut',           comment: 'ショートボブ。顔まわりを軽めに仕上げ、首元をすっきりと。',                         date: '2026.05.15', published: false, bg: 'linear-gradient(145deg,#1c1a18,#2c221e)' },
+  { id: 7, genre: 'カラー',   menuId: 'cut_color',     comment: 'インナーカラー。ブリーチ1回でオレンジ系のムラシャンで仕上げました。',               date: '2026.05.12', published: true,  bg: 'linear-gradient(145deg,#2a2420,#1e1c1a)' },
+  { id: 8, genre: 'パーマ',   menuId: 'cut_perm',      comment: 'ゆるふわパーマ。エアウェーブでダメージレスに仕上げました。',                         date: '2026.05.08', published: true,  bg: 'linear-gradient(145deg,#221e1c,#2e2a26)' },
 ];
 
 var nextId = 9;
@@ -1246,6 +1270,8 @@ function openWorkDetail(id) {
   document.getElementById('workDetailGenre').textContent = w.genre;
   document.getElementById('workDetailComment').textContent = w.comment;
   document.getElementById('workDetailDate').textContent = w.date;
+  var menu = menuData.find(function(m){ return m.id === w.menuId; });
+  document.getElementById('workDetailMenuName').textContent = menu ? menu.name + '　¥' + menu.price.toLocaleString() : '未設定';
   var sw = document.getElementById('workDetailToggleSwitch');
   w.published ? sw.classList.add('on') : sw.classList.remove('on');
   openModal('workDetailModal');
@@ -1356,9 +1382,11 @@ function handlePhotoSelect() {
   var comment = document.getElementById('addWorkComment').value.trim() || '（コメントなし）';
   var today = new Date();
   var dateStr = today.getFullYear() + '.' + String(today.getMonth()+1).padStart(2,'0') + '.' + String(today.getDate()).padStart(2,'0');
-  workData.unshift({ id: nextId++, genre: genre, comment: comment, date: dateStr, published: false, imageUrl: imageUrl, bg: 'linear-gradient(145deg,#3a2e28,#1e1c1a)' });
+  var menuId = document.getElementById('addWorkMenu').value || null;
+  workData.unshift({ id: nextId++, genre: genre, menuId: menuId, comment: comment, date: dateStr, published: false, imageUrl: imageUrl, bg: 'linear-gradient(145deg,#3a2e28,#1e1c1a)' });
   closeModal('addWorkModal');
   document.getElementById('addWorkComment').value = '';
+  document.getElementById('addWorkMenu').value = '';
   document.querySelectorAll('#addWorkModal .genre-tag').forEach(function(t){ t.classList.remove('active'); });
   input.value = '';
   renderArchive(activeFilter);
